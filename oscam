@@ -1,0 +1,277 @@
+#!/bin/sh
+iprouter=$(uci get network.lan.ipaddr)
+cd /tmp
+echo "Proses install OSCam"
+sleep 5
+chmod 755 oscam
+chmod 755 autokey
+cp -f oscam /bin
+cp -f autokey /usr/bin/
+rm -f oscam
+rm -f autokey
+clear
+sleep 2
+	
+cat > /etc/init.d/oscam << END
+#!/bin/sh /etc/rc.common
+# Copyright (C) openwrt.org
+
+START=60
+USE_PROCD=1
+
+start_service()
+{
+	/bin/oscam & run 
+}
+
+stop_service()
+{
+	killall oscam 
+}
+END
+      
+chmod 755 /etc/init.d/oscam
+clear
+echo "Install NEW Config OSCam"
+sleep 5
+
+cat > /bin/run << END
+#!/bin/sh
+/bin/oscam -bc /etc/oscam
+
+#end
+END
+
+chmod 755 /bin/run
+sleep 2
+cd /etc
+rmdir -p oscam >/dev/null 2>&1
+mkdir oscam
+sleep 2
+
+cat > /etc/oscam/oscam.conf << END
+[global]
+logfile                       = /var/log/oscam.log
+clienttimeout                 = 8000
+fallbacktimeout               = 4000
+clientmaxidle                 = 9999999
+nice                          = -1
+maxlogsize                    = 100
+waitforcards_extra_delay      = 800
+preferlocalcards              = 1
+usrfile                       = /var/log/oscamuser.log
+cwlogdir                      = /var/log/cw.log
+emmlogdir                     = /var/log/emm.log
+
+[cache]
+
+[newcamd]
+port                          = 10000@0100:FFFFFF;10001@0200:FFF000,FFFF00;10002@0300:FFFFFF
+key                           = 000102030405060708090A0B0C0D
+
+[cccam]
+port                          = 25000
+nodeid                        = 244CEAAD109514E0
+version                       = 2.0.11
+reshare                       = 2
+reshare_mode                  = 1
+stealth                       = 1
+minimizecards                 = 1
+
+[streamrelay]
+stream_relay_enabled          = 0
+stream_emm_enabled            = 0
+
+[dvbapi]
+enabled                       = 1
+pmt_mode                      = 4
+request_mode                  = 1
+listen_port                   = 9000
+delayer                       = 80
+user                          = dvbapi
+read_sdt                      = 1
+write_sdt_prov                = 1
+extended_cw_api               = 1
+boxtype                       = pc
+
+[monitor]
+port                          = 988
+aulow                         = 120
+monlevel                      = 1
+hideclient_to                 = 0
+
+[webif]
+httpport                      = 8080
+httpuser                      = admin
+httppwd                       = admin
+httphideidleclients           = 0
+httpshowpicons                = 1
+httpshowuserinfo              = 1
+httpshowcacheexinfo           = 1
+httpshowecminfo               = 1
+httpallowed                   = 0.0.0.0-255.255.255.255
+aulow                         = 120
+hideclient_to                 = 0
+http_status_log               = 1
+END
+
+
+cat > /etc/oscam/oscam.server << END
+[reader]
+label                         = PowerVu-Tandberg
+protocol                      = emu
+device                        = emulator
+caid                          = 090F,0500,1801,0604,2600,FFFF,0E00,4AE1,1010,0D00,0D02
+detect                        = cd
+ident                         = 090F:000000;0500:000000,030B00,023800,021110,007400,007800;1801:000000,007301,001101,002111;0604:000000;2600:000000;FFFF:000000;0E00:000000;4AE1:000011,000014,0000FE;1010:000000;0D00:000000,000004,000010,000014,000020,0000C0,0000C4,0000C8,0000CC;0D02:000000,00008C,0000A0,0000A4,0000A8
+group                         = 1
+emmcache                      = 2,2,2,0
+emu_auproviders               = 0604:010200;0E00:000000;4AE1:000011,000014,0000FE;1010:000000
+END
+
+cat > /etc/oscam/oscam.user << END
+[account]
+user                          = dvbapi
+pwd                           = password1
+caid                          = 090F,0500,1801,0604,2600,FFFF,0E00,4AE1,1010,0D00,0D02
+au                            = 1
+betatunnel                    = 1833.FFFF:1702
+group                         = 1
+ident                         = 090F:000000;0500:000000,030B00,023800,021110,007400,007800;1801:000000,007301,001101,002111;0604:000000;2600:000000;FFFF:000000;0E00:000000;4AE1:000011,000014,0000FE;1010:000000;0D00:000000,000004,000010,000014,000020,0000C0,0000C4,0000C8,0000CC;0D02:000000,00008C,0000A0,0000A4,0000A8
+
+[account]
+user                          = tes
+pwd                           = tes
+description                   = tes-pvu-tanberg
+caid                          = 090F,0500,1801,0604,2600,FFFF,0E00,4AE1,1010,0D00,0D02
+au                            = 1
+group                         = 1
+cacheex_allow_request         = 1
+cccmaxhops                    = 3
+END
+
+cat > /etc/oscam/SoftCam.Key << END
+#################### ASIASAT 7 ####################
+P 0150 00 113754C6C0CEE1 ;"SONY WAH"
+P 0150 01 785E6AFF44D7A9 ;"SONY WAH"
+P 0160 00 113754C6C0CEE1 ;"PIX SA"
+P 0160 01 785E6AFF44D7A9 ;"PIX SA"
+P 0170 00 113754C6C0CEE1 ;"SONY BBC EARTH SD"
+P 0170 01 785E6AFF44D7A9 ;"SONY BBC EARTH SD"
+P 0180 00 113754C6C0CEE1 ;"SONY YAY"
+P 0180 01 785E6AFF44D7A9 ;"SONY YAY"
+P 0190 00 113754C6C0CEE1 ;"TEN Pakistan"
+P 0190 01 785E6AFF44D7A9 ;"TEN Pakistan"
+P 0470 00 113754C6C0CEE1 ;"LePLEX HD"
+P 0470 01 785E6AFF44D7A9 ;"LePLEX HD"
+P 0480 00 113754C6C0CEE1 ;"SAB HD"
+P 0480 01 785E6AFF44D7A9 ;"SAB HD"
+P 0490 00 113754C6C0CEE1 ;"SONY BBC EARTH HD"
+P 0490 01 785E6AFF44D7A9 ;"SONY BBC EARTH HD"
+P 04a0 00 113754C6C0CEE1 ;"ROX HD"
+P 04a0 01 785E6AFF44D7A9 ;"ROX HD"
+P 04b0 00 113754C6C0CEE1 ;"SONY TEN 1 HD"
+P 04b0 01 785E6AFF44D7A9 ;"SONY TEN 1 HD"
+P 04c0 00 113754C6C0CEE1 ;"SONY TEN GOLF HD"
+P 04c0 01 785E6AFF44D7A9 ;"SONY TEN GOLF HD"
+P 07b0 00 113754C6C0CEE1 ;"SONY BBC EARTH SD Hindi"
+P 07b0 01 785E6AFF44D7A9 ;"SONY BBC EARTH SD Hindi"
+P 07c0 00 113754C6C0CEE1 ;"SONY YAY Tamil"
+P 07c0 01 785E6AFF44D7A9 ;"SONY YAY Tamil"
+P 0850 00 113754C6C0CEE1 ;"SONY BBC EARTH SD Tamil"
+P 0850 01 785E6AFF44D7A9 ;"SONY BBC EARTH SD Tamil"
+P 0860 00 113754C6C0CEE1 ;"SONY YAY Telugu"
+P 0860 01 785E6AFF44D7A9 ;"SONY YAY Telugu"
+P 08f0 00 113754C6C0CEE1 ;"SONY BBC EARTH SD Telugu"
+P 08f0 01 785E6AFF44D7A9 ;"SONY BBC EARTH SD Telugu"
+P 0ad0 00 113754C6C0CEE1 ;"SONY BBC EARTH HD Hindi"
+P 0ad0 01 785E6AFF44D7A9 ;"SONY BBC EARTH HD Hindi"
+P 0af0 00 113754C6C0CEE1 ;"SONY TEN 1 HD English"
+P 0af0 01 785E6AFF44D7A9 ;"SONY TEN 1 HD English"
+P 0b70 00 113754C6C0CEE1 ;"SONY BBC EARTH HD Tamil"
+P 0b70 01 785E6AFF44D7A9 ;"SONY BBC EARTH HD Tamil"
+P 0b90 00 113754C6C0CEE1 ;"SONY TEN 1 HD Bangla"
+P 0b90 01 785E6AFF44D7A9 ;"SONY TEN 1 HD Bangla"
+P 0c10 00 113754C6C0CEE1 ;"SONY BBC EARTH HD Telugu"
+P 0c10 01 785E6AFF44D7A9 ;"SONY BBC EARTH HD Telugu"
+P 0c30 00 113754C6C0CEE1 ;"SONY TEN 1 HD Malyalam"
+P 0c30 01 785E6AFF44D7A9 ;"SONY TEN 1 HD Malyalam"
+P 0150 00 98F8F71ED6F7DA ;"LIGAHD"
+P 0150 01 42906A071A4989 ;"LIGAHD"
+
+#PVU Audio OK hanya di SonyGrup
+#Di Ch lain sepertinya tetep bisu
+END
+
+cat > /etc/oscam/constant.cw << END
+PULPSTONE.PW
+END
+
+cat > /etc/oscam/oscam.srvid << END
+0E00@000000:004B|AS7|SONY TEN 1 HD
+0E00@000000:0049|AS7|SONY BBC EARTH HD
+0E00@000000:0019|AS7|TEN PAKISTAN
+0E00@000000:0047|AS7|LePLEX HD
+0E00@000000:0016|AS7|PIX SA
+0E00@000000:0015|AS7|SONY WAH
+0E00@000000:0018|AS7|SONY YAY
+0E00@000000:0048|AS7|SAB HD
+0E00@000000:004a|AS7|ROX HD
+0E00@000000:0017|AS7|SONY BBC EARTH SD
+0E00@000000:00c1|AS7|SONY BBC EARTH HD Telugu
+0E00@000000:007b|AS7|SONY BBC EARTH SD Hindi
+0E00@000000:0085|AS7|SONY BBC EARTH SD Tamil
+0E00@000000:008f|AS7|SONY BBC EARTH SD Telugu
+0E00@000000:00ad|AS7|SONY BBC EARTH HD Hindi
+0E00@000000:00b7|AS7|SONY BBC EARTH HD Tamil
+0E00@000000:004c|AS7|SONY TEN GOLF HD
+0E00@000000:007c|AS7|SONY YAY Tamil
+0E00@000000:0086|AS7|SONY YAY Telugu
+0E00@000000:00AF|AS7|SONY TEN 1 HD ENG
+0E00@000000:00B9|AS7|SONY TEN 1 HD BANG
+0E00@000000:00C3|AS7|SONY TEN 1 HD MALAY
+0E00@000000:0015|IS19|LIGA HD
+END
+
+cat > /etc/oscam/oscam.provid << END
+PULPSTONE.PW
+END
+
+
+/etc/init.d/oscam enable
+/etc/init.d/oscam start
+
+killall crond
+/etc/init.d/cron enable
+/etc/init.d/cron start
+clear 
+sleep 3
+clear
+      echo "Install OSCam selesai"
+      echo ""
+      echo "Masuk Menu WebIf OSCam http://$iprouter:8080 via browser"
+      echo "username  :  admin"
+      echo "password  :  admin"
+      echo ""
+      sleep 3
+      echo "untuk setting di reciever, silahkan input"
+      echo "protocol  : CCCAM"
+      echo "host      : $iprouter"
+      echo "port      : 25000"
+      echo "username  : tes"
+      echo "password  : tes"
+      echo ""
+      sleep 3
+      echo "Untuk input SoftCam.Key"
+      echo "WebIf OSCam -> Files -> other file -> SoftCam.Key"
+      echo "Jangan lupa di SAVE dan RESTART OSCam via WebIf"
+      echo ""
+      echo "Router reboot otomatis"
+      sleep 3
+      echo ""
+      echo "Regrads,"
+      echo "fuadsalim@pulpstone [fb.com/fuad.salim.drg]"
+      echo ""
+sleep 5
+reboot
+
